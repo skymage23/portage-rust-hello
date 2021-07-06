@@ -1,0 +1,3 @@
+[submodule "submodules/third_party/portage"]
+	path = submodules/third_party/portage
+	url = https://github.com/gentoo/portage.git
