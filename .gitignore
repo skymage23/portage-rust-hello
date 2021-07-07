@@ -1,1 +1,3 @@
-portage_root/*
+portage_root
+portage_root/**
+**/todo.txt
