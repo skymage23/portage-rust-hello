@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 
 ROOT="${PWD}"
-[ "${PORTAGE_ROOT}" == "" ] && PORTAGE_ROOT="${ROOT}/portage_root"
-[ "${PORTAGE_DIR}" == "" ] && PORTAGE_DIR="${ROOT}/submodules/third_party/portage"
+[ "${PORTAGE_ROOT}" == "" ] && \
+PORTAGE_ROOT="${ROOT}/portage_root"
+
+[ "${PORTAGE_DIR}" == "" ] && \
+PORTAGE_DIR="${ROOT}/submodules/third_party/portage"
+
+[ "${PORTAGE_CONFIG_DIR}" == "" ] && \
+PORTAGE_CONFIG_DIR="${ROOT}/config_files"
+
 PORTAGE_SETUP="./setup.py"  #This will help catch "wrong dir" mistakes.
 
 
@@ -17,7 +24,7 @@ function die {
     local message=$2
     local errcode=$3
 
-    [ ${errcode} -lt 1 ] && __die "die: Inappropriate errcode argument."
+    [ ${errcode} -lt 1 ] && __die "die: Inappropriate errcode argument." 1
     __die "${func_name}: ${message}" "${errcode}"
 }
 
@@ -26,15 +33,17 @@ function die_with_usage {
     local message=$2
     local errcode=$3
 
-    [ ${errcode} -lt 1 ] && __die "die_with_usage: Inappropriate errcode argument."
+    [ ${errcode} -lt 1 ] && \
+    __die "die_with_usage: Inappropriate errcode argument." 1
     >&2 echo "${func_name}: ${message}"
     action_usage 1
     exit ${errcode}
 }
 
 #Action functions:
-#help_install-submods="Installs git submodules if they are not already set up."
-function action_install-submods {
+help_submods=\
+"Installs git submodules if they are not already set up."
+function action_submods {
     if [ "$(git submodule summary)" == "" ]; then
         echo "Initializing Git submodules..."
         git submodule update --init --recursive
@@ -43,7 +52,7 @@ function action_install-submods {
 
 
 help_install="Install Portage into the PORTAGE_ROOT"
-function action_install {\
+function action_install {
     local __func_name="${FUNCNAME[0]}"
 
     [ ! -d "${PORTAGE_DIR}" ] && \
@@ -56,12 +65,12 @@ function action_install {\
     fi
 
     if [ "$(echo ${PORTAGE_DIR}/*)" == "${PORTAGE_DIR}/*" ]; then 
-        action_install-submods
+        action_submods
     fi
     
     echo "Executing Portage install..."
     (
-        cd ${PORTAGE_DIR};
+        cd ${PORTAGE_DIR}
         echo "PWD: ${PWD}"
         ! ${PORTAGE_SETUP} install --root="${PORTAGE_ROOT}" && \
         ${PORTAGE_SETUP} clean && \
@@ -69,6 +78,17 @@ function action_install {\
 
 	${PORTAGE_SETUP} clean
     )
+}
+
+help_configs="Install project-provided Portage configs"
+function action_configs {
+    __func_name="${FUNCNAME[0]}"
+
+    [ ! -d "${PORTAGE_ROOT}" ] && die "${__func_name}"  "Portage not installed. Please run the \"install\" action." 1
+
+    #Copy Portage Software Config
+    cp -r "${PORTAGE_CONFIG_DIR}/portage/repos.conf" \
+    "${PORTAGE_ROOT}/etc/portage/repos.conf"
 }
 
 help_clean="Delete the PORTAGE_ROOT and remove build artifacts."
@@ -84,7 +104,14 @@ function action_usage {
         echo "setup-portage.sh"
         echo
         echo "Initializes the Portage build system for project use"
+	echo
     fi
+    echo "Default values:"
+    echo 'ROOT = <your_current_working_directory>'
+    echo 'PORTAGE_ROOT = "${ROOT}/portage_root"'
+    echo 'PORTAGE_DIR = "${ROOT}/submodules/third_party/portage"'
+    echo 'PORTAGE_CONFIG_DIR = "${ROOT}/config_files"'
+    echo
     echo "Usage:"
     printf "\tsetup-portage.sh <action>\n\n"
     echo "List of possible actions:"
