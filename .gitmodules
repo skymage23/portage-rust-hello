@@ -1,3 +1,6 @@
 [submodule "submodules/third_party/portage"]
 	path = submodules/third_party/portage
 	url = https://github.com/gentoo/portage.git
+[submodule "submodules/third_party/bash"]
+	path = submodules/third_party/bash
+	url = https://git.savannah.gnu.org/git/bash.git
